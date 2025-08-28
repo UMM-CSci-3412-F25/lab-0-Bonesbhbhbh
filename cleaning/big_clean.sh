@@ -1,17 +1,16 @@
 #!/usr/bin/bash
 
-directory=$1
+directory=$1 # usr inputs a directory to clean
+SCRATCH=$(mktemp --directory) # make an empty temp directory
+base=$(basename "$directory" .tgz) # save the name of the directory you are working with
+here=$(pwd) # save working directory
 
-SCRATCH=$(mktemp --directory)
-base=$(basename "$directory" .tgz)
-here=$(pwd)
+tar zxf "$directory" --directory "$SCRATCH" # open directory and put it into the new temp dir
 
-tar zxf "$directory" --directory "$SCRATCH" # open directory to temp dir
+grep -lrZ "DELETE ME" "$SCRATCH" | xargs -0 rm -f # make list of files pending deletion then delete them
 
-grep -lrZ "DELETE ME" "$SCRATCH" | xargs -0 rm -f
+cd "$SCRATCH" || return # enter the temp directory
+tar -czf "$here/cleaned_$directory" "$base" # create a directory (a level up) and put contents of base directory into it
 
-cd "$SCRATCH" || return
-tar -czf "$here/cleaned_$directory" "$base"
-
-cd "$here" || return
-rm -rf "$SCRATCH"
+cd "$here" || return # go back to the start working directory
+rm -rf "$SCRATCH" # delete temp directory
